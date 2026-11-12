@@ -19,8 +19,9 @@ Apple TV（tvOS）风格的自托管视频聚合前端：界面走 tvOS 视觉�
   - 检查 / 测试：`pnpm check` / `pnpm test`
 
 ## 当前状态
-- 阶段：原型（骨架已跑通，源适配层与 tvOS 界面待实现）
-- 已知限制：仅 `/api/health` 一个路由；数据库依赖已就绪但无 schema；hanime1 源适配器未实现。
+- 阶段：开发中（hanime1 源、tvOS 界面、双播与本地库均已跑通）
+- 已知限制：仅接入 hanime1 一个源；无字幕/弹幕；下载为单并发。
+- 上游要求：hanime1 有 Cloudflare 防护，大陆网络通常需配置 `HANIME1_DNS_PROXY` 与 `HANIME1_COOKIE`（见 `.env.example`）。
 
 ## 核心技术
-- 语言 / 框架 / 关键依赖：TypeScript（strict）、pnpm workspace、Hono 4、React 19、Tailwind 3.4 + shadcn/ui、Drizzle ORM（rc 线）+ SQLite（node:sqlite）、vp（Vite+）统一构建。
+- 语言 / 框架 / 关键依赖：TypeScript（strict）、pnpm workspace、Hono 4、React 19、Tailwind 3.4 + shadcn/ui、空间导航（@noriginmedia/norigin-spatial-navigation）、cheerio、curl 传输层、SQLite（node:sqlite）、vp（Vite+）统一构建。

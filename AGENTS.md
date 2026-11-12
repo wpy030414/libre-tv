@@ -18,8 +18,8 @@ libre-tv 是 tvOS 风格视频聚合应用（pnpm monorepo：Hono 源适配后�
   - 工作目录不是 Git 仓库时拒绝写入；多步骤任务验证通过后只提交一次。
 
 ## 目录速查
-- `apps/server/src/` — Hono 入口：API 路由 + 生产模式托管 `dist/client` 静态文件
-- `apps/web/src/` — React SPA（tvOS 风格界面，Tailwind + shadcn/ui）
-- `packages/shared/src/` — 源契约（SourceAdapter/VideoSummary/VideoDetail/Page）与常量
+- `apps/server/src/` — Hono 入口、`sources/`（源适配 + curl 传输）、`library/`（下载与本地库）、`routes/`
+- `apps/web/src/` — React SPA（tvOS 风格界面、空间导航、pages/ 五页）
+- `packages/shared/src/` — 契约（SourceAdapter、LibraryItem、DownloadJob、PlaybackResolve…）
 - `docs/` — PRD / ARCHITECTURE / DECISIONS / specs（模块验收标准）
 - `.xat/workflows/ci-cd.yml` — pm2 部署模板

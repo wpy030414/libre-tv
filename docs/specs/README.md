@@ -12,4 +12,5 @@
 ## 条目
 | 模块 | 文件 | 一句话职责 | 状态 | 更新日期 |
 |------|------|------------|------|----------|
-| 源适配层 | [module-source-adapter.md](module-source-adapter.md) | 以 SourceAdapter 契约归一化各源站（首个 hanime1），经 /api 暴露 | 已实现（契约）／适配器草稿 | 2026-11-12 |
+| 源适配层 | [module-source-adapter.md](module-source-adapter.md) | 以 SourceAdapter 契约归一化各源站（首个 hanime1），经 /api 暴露 | 已实现 | 2026-11-12 |
+| 本地库 | [module-library.md](module-library.md) | 双播模式（CDN 直放/下载转本地）、下载队列、离线开关、播放进度 | 已实现 | 2026-11-12 |

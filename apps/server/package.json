@@ -7,15 +7,17 @@
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "build": "vp pack",
     "start": "cross-env NODE_ENV=production node dist/index.js",
-    "test": "vp test --passWithNoTests",
+    "test": "vp test run",
     "check": "vp check"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.7",
     "@libre-tv/shared": "workspace:*",
+    "cheerio": "^1.2.0",
     "dotenv": "^18.0.10",
     "drizzle-orm": "1.0.0-rc.5",
-    "hono": "^4.13.18"
+    "hono": "^4.13.18",
+    "undici": "^8.12.4"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
