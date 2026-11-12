@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import { readFileSync } from 'node:fs'
 import { Hono } from 'hono'
 import { isUpstreamError, upstreamStatus } from '../sources/http'
 import type { RegisteredSource } from '../sources'
@@ -32,7 +33,12 @@ export function pipeUpstream(upstream: Response): Response {
   return new Response(upstream.body, { status: upstream.status, headers })
 }
 
-export function sourceRoutes(sources: Map<string, RegisteredSource>) {
+export interface SourceRouteDeps {
+  meta?: import('../library/cache').MetaCacheStore
+  images?: import('../library/cache').ImageCache
+}
+
+export function sourceRoutes(sources: Map<string, RegisteredSource>, deps: SourceRouteDeps = {}) {
   const app = new Hono<SourceEnv>()
 
   app.get('/', (c) => c.json([...sources.values()].map((s) => ({ id: s.id, name: s.name }))))
@@ -66,7 +72,37 @@ export function sourceRoutes(sources: Map<string, RegisteredSource>) {
   })
 
   app.get('/:sourceId/detail/:vid', async (c) => {
-    return c.json(await c.get('source').detail(c.req.param('vid')))
+    const source = c.get('source')
+    const vid = c.req.param('vid')
+    const key = `${source.id}:${vid}`
+
+    // 元数据缓存：元信息几乎不变，命中且直链未过期则零回源
+    const cached = deps.meta?.get(key)
+    if (cached?.streamValid) {
+      c.header('x-cache', 'HIT')
+      return c.json(cached.detail)
+    }
+    if (cached) {
+      // 直链过期：只重新解析播放地址，其余元数据沿用缓存
+      try {
+        const fresh = await source.detail(vid)
+        const merged = deps.meta!.patchStream(key, {
+          streamUrl: fresh.streamUrl,
+          qualities: fresh.qualities,
+        })
+        c.header('x-cache', 'PARTIAL')
+        return c.json(merged ?? fresh)
+      } catch {
+        // 刷新失败时仍返回缓存（元数据可用，只是暂时不能播放）
+        c.header('x-cache', 'STALE')
+        return c.json(cached.detail)
+      }
+    }
+
+    const detail = await source.detail(vid)
+    deps.meta?.put(key, detail)
+    c.header('x-cache', 'MISS')
+    return c.json(detail)
   })
 
   // 流代理：Range 透传，规避 CORS/防盗链
@@ -99,7 +135,34 @@ export function sourceRoutes(sources: Map<string, RegisteredSource>) {
       u.protocol === 'https:' &&
       source.imageHosts.some((h) => u.hostname === h || u.hostname.endsWith('.' + h))
     if (!allowed) return c.json({ error: '不允许代理该主机' }, 403)
-    return pipeUpstream(await source.fetchBinary(u.toString()))
+
+    // 图片缓存：封面基本不变，落盘一次后长期复用
+    const hit = deps.images?.find(u.toString())
+    if (hit) {
+      const buf = readFileSync(deps.images!.path(hit))
+      return new Response(buf, {
+        headers: {
+          'content-type': hit.endsWith('.png') ? 'image/png' : 'image/jpeg',
+          'content-length': String(buf.length),
+          'cache-control': 'public, max-age=31536000, immutable',
+          'x-cache': 'HIT',
+        },
+      })
+    }
+
+    const upstream = await source.fetchBinary(u.toString())
+    if (!upstream.ok) return pipeUpstream(upstream)
+    const bytes = Buffer.from(await upstream.arrayBuffer())
+    const ext = (upstream.headers.get('content-type') ?? '').includes('png') ? 'png' : 'jpg'
+    deps.images?.save(u.toString(), bytes, ext)
+    return new Response(bytes, {
+      headers: {
+        'content-type': ext === 'png' ? 'image/png' : 'image/jpeg',
+        'content-length': String(bytes.length),
+        'cache-control': 'public, max-age=31536000, immutable',
+        'x-cache': 'MISS',
+      },
+    })
   })
 
   return app

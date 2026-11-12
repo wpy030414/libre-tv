@@ -9,6 +9,7 @@ import { sourceRoutes } from './routes/sources'
 import { openLibraryDb } from './library/db'
 import { Downloader } from './library/downloader'
 import { libraryRoutes } from './routes/library'
+import { createImageCache, createMetaCache } from './library/cache'
 
 // 从仓库根加载 .env：
 // 开发时本文件在 apps/server/src/ → 向上三级；生产产物在 apps/server/dist/ → 同样三级
@@ -51,7 +52,10 @@ const app = new Hono()
 
 // API 路由
 app.get('/api/health', (c) => c.json({ status: 'ok' }))
-app.route('/api/sources', sourceRoutes(sources))
+const metaCache = createMetaCache(library)
+const imageCache = createImageCache(join(library.mediaDir, '.cover-cache'))
+
+app.route('/api/sources', sourceRoutes(sources, { meta: metaCache, images: imageCache }))
 app.route(
   '/api/library',
   libraryRoutes({

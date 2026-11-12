@@ -43,6 +43,14 @@ export function Player({
   useEffect(() => {
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current)
+      // 卸载时主动暂停并清空 src：媒体随 DOM 移除会中断未决的 play()，
+      // 不处理会在控制台留下 AbortError
+      const v = videoRef.current
+      if (v) {
+        v.pause()
+        v.removeAttribute('src')
+        v.load()
+      }
     }
   }, [])
 
@@ -55,7 +63,7 @@ export function Player({
   const toggle = () => {
     const v = videoRef.current
     if (!v) return
-    if (v.paused) void v.play()
+    if (v.paused) void v.play().catch(() => setPlaying(false))
     else v.pause()
     poke()
   }

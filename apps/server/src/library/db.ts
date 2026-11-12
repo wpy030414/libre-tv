@@ -43,9 +43,44 @@ export function openLibraryDb(dataDir = 'data'): LibraryDb {
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+    -- 详情元数据缓存：元信息很少变动，一次载入后长期复用。
+    -- 存解析后的 VideoDetail（而不是原始 HTML），播放直链带签名会过期，
+    -- 故单独记录 expires_at，过期时只刷新直链、元数据照旧可用。
+    CREATE TABLE IF NOT EXISTS meta_cache (
+      key        TEXT PRIMARY KEY,
+      payload    TEXT NOT NULL,
+      cached_at  TEXT NOT NULL,
+      expires_at INTEGER
+    );
     CREATE INDEX IF NOT EXISTS idx_library_source ON library(source);
   `)
+  mkdirSync(join(mediaDir, 'covers'), { recursive: true })
+  mkdirSync(join(mediaDir, '.cover-cache'), { recursive: true })
   return { db, mediaDir }
+}
+
+/** 元数据缓存读写（key = `<source>:<id>`） */
+export function readMetaCache(
+  db: DatabaseSync,
+  key: string,
+): { payload: string; expiresAt: number | null } | undefined {
+  const row = db.prepare('SELECT payload, expires_at FROM meta_cache WHERE key = ?').get(key) as
+    | { payload: string; expires_at: number | null }
+    | undefined
+  return row ? { payload: row.payload, expiresAt: row.expires_at } : undefined
+}
+
+export function writeMetaCache(
+  db: DatabaseSync,
+  key: string,
+  payload: string,
+  expiresAt: number | null,
+): void {
+  db.prepare(
+    `INSERT INTO meta_cache (key, payload, cached_at, expires_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET payload=excluded.payload,
+       cached_at=excluded.cached_at, expires_at=excluded.expires_at`,
+  ).run(key, payload, new Date().toISOString(), expiresAt)
 }
 
 export function getSetting(db: DatabaseSync, key: string): string | undefined {
