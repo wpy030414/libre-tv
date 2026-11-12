@@ -40,11 +40,12 @@ export function streamProxy(
 export function serveLocalFile(path: string, range: string | undefined): Response {
   const size = statSync(path).size
   const buf = readFileSync(path)
+  const type = mimeOf(path)
   if (!range) {
     return new Response(buf, {
       status: 200,
       headers: {
-        'content-type': 'video/mp4',
+        'content-type': type,
         'content-length': String(size),
         'accept-ranges': 'bytes',
       },
@@ -61,12 +62,28 @@ export function serveLocalFile(path: string, range: string | undefined): Respons
   return new Response(chunk, {
     status: 206,
     headers: {
-      'content-type': 'video/mp4',
+      'content-type': type,
       'content-length': String(chunk.length),
       'content-range': `bytes ${start}-${end}/${size}`,
       'accept-ranges': 'bytes',
     },
   })
+}
+
+/** 本地媒体服务按扩展名给 MIME（封面是 jpg，不能一律 video/mp4） */
+function mimeOf(p: string): string {
+  const ext = p.slice(p.lastIndexOf('.')).toLowerCase()
+  const map: Record<string, string> = {
+    '.mp4': 'video/mp4',
+    '.m4v': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mkv': 'video/x-matroska',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+  }
+  return map[ext] ?? 'application/octet-stream'
 }
 
 export function libraryRoutes(deps: PlaybackDeps) {

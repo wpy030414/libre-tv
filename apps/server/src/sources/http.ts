@@ -86,9 +86,12 @@ export class UpstreamClient {
       resolveMap: await this.resolveMap(new URL(url).hostname),
     })
     if (res.text !== undefined) {
+      // 小响应：body 已由 curl 完整读入（可能已解压），上游的 content-length /
+      // content-range 不再可信——带上会让下游按错误长度读取，产生
+      // 「Data after Connection: close」。这里只保留内容类型类头，长度交给运行时重算。
       return new Response(res.text, {
         status: res.status,
-        headers: toWebHeaders(res.headers),
+        headers: toWebHeaders(res.headers, { omitLength: true }),
       })
     }
     // 大文件：直接流式回传，读完删除临时文件
@@ -205,16 +208,18 @@ function stripRange(h: Record<string, string>): Record<string, string> {
   return rest
 }
 
-function toWebHeaders(h: Record<string, string>): Headers {
+function toWebHeaders(h: Record<string, string>, opts?: { omitLength?: boolean }): Headers {
   const out = new Headers()
-  for (const k of [
+  const allow = [
     'content-type',
     'content-length',
     'content-range',
     'accept-ranges',
     'etag',
     'last-modified',
-  ]) {
+  ]
+  for (const k of allow) {
+    if (opts?.omitLength && (k === 'content-length' || k === 'content-range')) continue
     if (h[k]) out.set(k, h[k])
   }
   return out

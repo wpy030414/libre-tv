@@ -101,7 +101,9 @@ async function runOnce(req: CurlRequest): Promise<CurlResponse> {
     const respHeaders = parseHeaders(headerText)
     const stat = await fs.stat(bodyFile).catch(() => undefined)
     if (!stat) return { status, headers: respHeaders }
-    if (stat.size <= MAX_BUFFER) {
+    // 只有按文本读是安全的，才给 text。图片/视频等二进制按 UTF-8 解码会把
+    // 非 UTF-8 字节替换成 U+FFFD，文件随即损坏——必须原样走 bodyFile。
+    if (stat.size <= MAX_BUFFER && isTextual(respHeaders['content-type'])) {
       const text = await fs.readFile(bodyFile, 'utf-8')
       await fs.rm(dir, { recursive: true, force: true })
       return { status, headers: respHeaders, text }
@@ -183,4 +185,17 @@ export function canonicalHeader(name: string): string {
   const lower = name.toLowerCase()
   if (CANONICAL[lower]) return CANONICAL[lower]
   return lower.replace(/(^|-)([a-z])/g, (_, d: string, c: string) => d + c.toUpperCase())
+}
+
+/** 可按 UTF-8 安全读取的内容类型；无 content-type 时按文本处理（HTML 页面常缺） */
+function isTextual(contentType?: string): boolean {
+  if (!contentType) return true
+  const t = contentType.toLowerCase()
+  return (
+    t.startsWith('text/') ||
+    t.includes('json') ||
+    t.includes('xml') ||
+    t.includes('javascript') ||
+    t.includes('x-www-form-urlencoded')
+  )
 }

@@ -25,7 +25,10 @@ export function pipeUpstream(upstream: Response): Response {
     const v = upstream.headers.get(k)
     if (v) headers.set(k, v)
   }
+  // 明确关闭连接复用：体为流式/可能被重新编码时，下游按 keep-alive 复用连接
+  // 会把残余字节读到下一个响应上（Vite 代理报 Data after Connection: close）
   headers.set('cache-control', 'public, max-age=3600')
+  headers.set('connection', 'close')
   return new Response(upstream.body, { status: upstream.status, headers })
 }
 

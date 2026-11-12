@@ -60,3 +60,14 @@ describe('本地文件 Range 服务', () => {
     expect(serveLocalFile(f, 'bytes=100-200').status).toBe(416)
   })
 })
+
+describe('本地文件 MIME', () => {
+  it('封面按 jpg、视频按 mp4 返回', () => {
+    const img = join(dir, 'cover.jpg')
+    const vid = join(dir, 'movie.mp4')
+    writeFileSync(img, Buffer.from([0xff, 0xd8, 0xff, 0xe0]))
+    writeFileSync(vid, Buffer.alloc(64))
+    expect(serveLocalFile(img, undefined).headers.get('content-type')).toBe('image/jpeg')
+    expect(serveLocalFile(vid, undefined).headers.get('content-type')).toBe('video/mp4')
+  })
+})
