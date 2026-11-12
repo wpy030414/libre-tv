@@ -1,0 +1,17 @@
+{
+  "name": "@libre-tv/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./types": "./src/types.ts",
+    "./constants": "./src/constants.ts"
+  },
+  "scripts": {
+    "check": "vp check"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.6.0"
+  }
+}

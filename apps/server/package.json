@@ -1,0 +1,28 @@
+{
+  "name": "@libre-tv/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+    "build": "vp pack",
+    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "test": "vp test --passWithNoTests",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.7",
+    "@libre-tv/shared": "workspace:*",
+    "dotenv": "^18.0.10",
+    "drizzle-orm": "1.0.0-rc.5",
+    "hono": "^4.13.18"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "cross-env": "^10.1.0",
+    "drizzle-kit": "1.0.0-rc.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.6.0"
+  }
+}

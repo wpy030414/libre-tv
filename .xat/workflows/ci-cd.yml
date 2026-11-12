@@ -1,0 +1,15 @@
+steps:
+  - name: Build
+    run: |
+      avail_kb=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+      if [ "${avail_kb:-0}" -lt 4194304 ]; then
+        export NODE_OPTIONS='--max-old-space-size=1024'
+      fi
+      vp install
+      pnpm build
+  - name: Run
+    run: |
+      if pm2 jlist 2>/dev/null | grep -q '"name":"libre-tv"'; then
+        pm2 delete libre-tv
+      fi
+      pm2 start 'pnpm start' --name libre-tv

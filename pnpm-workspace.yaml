@@ -1,0 +1,13 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm 10+ 默认拦截依赖构建脚本；tsx 依赖 esbuild，drizzle-kit 带安装期脚本。
+# pnpm 12 用 allowBuilds；pnpm 10/11 用 onlyBuiltDependencies: [esbuild]
+allowBuilds:
+  esbuild: true
+  drizzle-kit: true
+
+permissions:
+  drizzle-kit:
+    skills: true

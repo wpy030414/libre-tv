@@ -1,0 +1,19 @@
+{
+  "name": "libre-tv",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,web \"pnpm --filter @libre-tv/server dev\" \"wait-on tcp:11408 && pnpm --filter @libre-tv/web dev\"",
+    "build": "pnpm --filter @libre-tv/server build && pnpm --filter @libre-tv/web build",
+    "start": "pnpm --filter @libre-tv/server start",
+    "test": "pnpm -r test",
+    "check": "pnpm -r check"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7",
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.6.0",
+    "wait-on": "^9.5.1"
+  }
+}
